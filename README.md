@@ -18,5 +18,6 @@ npm install -g serverless@3.22.0
 
 ### deploy
 ```
-serverless deploy --aws-profile [profile-here]
+> shared-api
+serverless deploy
 ```
