@@ -1,0 +1,31 @@
+service: shared-api-context-a
+
+package:
+  individually: true
+  excludeDevDependencies: false
+  patterns:
+    - './**'
+
+custom:
+  awsconfig: ${file(../../../awsconfig.yml):${opt:stage, 'dev'}}
+  splitStacks:
+    perFunction: true
+    perType: false
+    perGroupFunction: false
+
+provider:
+  name: aws
+  profile: personal
+  runtime: python3.9
+  region: ${opt:region, 'us-east-1'}
+  stage: ${opt:stage, 'dev'}
+  versionFunctions: false
+  logRetentionInDays: ${self:custom.awsconfig.log_retention_in_days}
+  apiGateway:
+    restApiId:
+      'Fn::ImportValue': shared-api-${self:provider.stage}-restapi-id
+    restApiRootResourceId:
+      'Fn::ImportValue': shared-api-${self:provider.stage}-root-id
+
+functions:
+  - ${file(routes.yml)}

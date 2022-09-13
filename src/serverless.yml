@@ -1,0 +1,64 @@
+service: shared-api
+
+package:
+  individually: true
+  excludeDevDependencies: false
+  patterns:
+    - './**'
+
+custom:
+  awsconfig: ${file(../awsconfig.yml):${opt:stage, 'dev'}}
+  splitStacks:
+    perFunction: true
+    perType: false
+    perGroupFunction: false
+
+provider:
+  name: aws
+  profile: personal
+  runtime: python3.9
+  region: ${opt:region, 'us-east-1'}
+  stage: ${opt:stage, 'dev'}
+  versionFunctions: false
+  logRetentionInDays: ${self:custom.awsconfig.log_retention_in_days}
+
+plugins:
+  #- serverless-plugin-split-stacks
+
+resources:
+  Resources:
+    ApiGatewayRestApi:
+      Type: AWS::ApiGateway::RestApi
+      Properties:
+        Name: ${self:service}-${self:provider.stage}
+    GatewayResponseDefault4XX:
+      Type: 'AWS::ApiGateway::GatewayResponse'
+      Properties:
+        ResponseParameters:
+          gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
+          gatewayresponse.header.Access-Control-Allow-Headers: "'*'"
+        ResponseType: DEFAULT_4XX
+        RestApiId:
+          Ref: 'ApiGatewayRestApi'
+    GatewayResponseDefault5XX:
+      Type: 'AWS::ApiGateway::GatewayResponse'
+      Properties:
+        ResponseParameters:
+          gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
+          gatewayresponse.header.Access-Control-Allow-Headers: "'*'"
+        ResponseType: DEFAULT_5XX
+        RestApiId:
+          Ref: 'ApiGatewayRestApi'
+  Outputs:
+   ApiGatewayRestApiId:
+     Value:
+       Ref: ApiGatewayRestApi
+     Export:
+       Name: ${self:service}-${self:provider.stage}-restapi-id
+   ApiGatewayRestApiRootResourceId:
+     Value:
+       Fn::GetAtt:
+         - ApiGatewayRestApi
+         - RootResourceId
+     Export:
+       Name: ${self:service}-${self:provider.stage}-root-id

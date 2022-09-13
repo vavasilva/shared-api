@@ -1,0 +1,13 @@
+services:
+  shared-api:
+    path: src
+
+  shared-api-context-a:
+    path: src/functions/context-a
+    dependsOn:
+      - shared-api
+
+  shared-api-context-b:
+    path: src/functions/context-b
+    dependsOn:
+      - shared-api
