@@ -7,4 +7,4 @@ logging.getLogger().setLevel(logging.INFO)
 
 def lambda_handler(event, context):
     logging.info(f"event {event}")
-    return http_response(200, "OK")
+    return http_response("OK")
