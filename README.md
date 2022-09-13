@@ -8,7 +8,7 @@ This project is an example of share an API endpoint between services.
 
 References:
 
-[aws/guide/serverless](https://www.serverless.com/framework/docs/providers/aws/guide/serverless.yml/)
+[aws-guide-serverless](https://www.serverless.com/framework/docs/providers/aws/guide/serverless.yml/)
 
 [serverless-compose](https://www.serverless.com/framework/docs/guides/compose)
 
