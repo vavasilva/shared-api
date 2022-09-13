@@ -1,18 +1,15 @@
 dev:
   log_retention_in_days: 1
-  aws_account_id: 199613275452
   tracing:
     apiGateway: false
     lambda: false
 hmg:
   log_retention_in_days: 1
-  aws_account_id: 199613275452
   tracing:
     apiGateway: false
     lambda: false
 prod:
   log_retention_in_days: 15
-  aws_account_id: 199613275452
   tracing:
     apiGateway: true
     lambda: true
