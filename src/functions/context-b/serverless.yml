@@ -1,4 +1,4 @@
-service: shared-api-context-a
+service: shared-api-context-b
 frameworkVersion: ^3.22.0
 
 package:

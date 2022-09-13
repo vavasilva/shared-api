@@ -1,0 +1,21 @@
+lambda:
+  name: lambda_${self:provider.stage}
+  handler: lambda.lambda_handler
+  package:
+    patterns:
+      - lambda.py
+      - libraries/**
+  tracing: ${self:custom.awsconfig.tracing.lambda}
+  memorySize: 128
+  timeout: 29
+  events:
+    - http:
+        path: contexts
+        method: get
+        cors: true
+        private: true
+    - http:
+        path: contexts/{contexts_id}
+        method: get
+        cors: true
+        private: true

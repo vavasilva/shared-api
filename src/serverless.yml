@@ -1,10 +1,11 @@
 service: shared-api
+frameworkVersion: ^3.22.0
 
 package:
   individually: true
   excludeDevDependencies: false
   patterns:
-    - './**'
+    - '!./**'
 
 custom:
   awsconfig: ${file(../awsconfig.yml):${opt:stage, 'dev'}}
@@ -21,9 +22,21 @@ provider:
   stage: ${opt:stage, 'dev'}
   versionFunctions: false
   logRetentionInDays: ${self:custom.awsconfig.log_retention_in_days}
+  apiGateway:
+    apiKeys:
+      - name: ${self:service}-${self:provider.stage}-apikey
+    usagePlan:
+        quota:
+          limit: 1000
+          period: MONTH
+        throttle:
+          burstLimit: 1
+          rateLimit: 1
 
 plugins:
-  #- serverless-plugin-split-stacks
+
+functions:
+  - ${file(routes.yml)}
 
 resources:
   Resources:
