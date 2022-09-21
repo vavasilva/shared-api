@@ -17,7 +17,8 @@ References:
 [serverless-compose](https://www.serverless.com/framework/docs/guides/compose)
 
 ```
-npm install -g serverless@3.22.0
+npm i -g serverless@3.22.0
+npm i serverless-plugin-split-stacks@1.11.3
 ```
 
 ### deploy
