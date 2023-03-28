@@ -1,0 +1,101 @@
+name: source deployment dev
+
+on:
+  workflow_dispatch:
+    inputs:
+      deployStepFunction:
+        type: choice
+        description: Deploy step function
+        options:
+          - none
+          - action_product_service
+          - action_smartrm_migration
+          - ateleia_backup_exclusion
+          - ateleia_change_ftp_credentials
+          - ateleia_contract_cancellation
+          - ateleia_instance_ports
+          - ateleia_restore_customer_access
+          - carol_provisioning
+          - delete_topology_prime
+          - execute_maintenance_window
+          - intera_clone_topology
+          - intera_update_instance_flavor
+          - intera_update_instance_hard_disk
+          - intera_zone_actions_database_directories
+          - intera_zone_additional_vm
+          - intera_zone_application_migration
+          - intera_zone_backup_manual
+          - intera_zone_clone_database
+          - intera_zone_clone_topology
+          - intera_zone_customer_migration_edge
+          - intera_zone_data_protection
+          - intera_zone_data_protection_download
+          - intera_zone_database_download
+          - intera_zone_database_jobs
+          - intera_zone_database_kill_sessions
+          - intera_zone_database_migration
+          - intera_zone_database_migration_pool
+          - intera_zone_database_tde
+          - intera_zone_database_upgrade
+          - intera_zone_database_user
+          - intera_zone_delete_topology
+          - intera_zone_delete_topology_shared_public_address
+          - intera_zone_delete_topology_smart
+          - intera_zone_edit_loadbalancer
+          - intera_zone_nat
+          - intera_zone_provisioning
+          - intera_zone_provisioning_shared_public_address
+          - intera_zone_provisioning_smart
+          - intera_zone_update_instance_flavor
+          - intera_zone_update_instance_hard_disk
+          - intera_zone_vpn
+          - tcm_execute_command
+
+      deployServices:
+        type: boolean
+        description: 'Deploy all services'
+        required: false
+
+jobs:
+  deploy-dev:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '16.x'
+
+      - name: Branch name
+        run: echo "Current branch $GITHUB_REF"
+
+      - name: Install Serverless Framework
+        run: |
+          make install-serverless-api
+      - name: Install NPM dependencies serverless
+        run: |
+          make install-plugins-api
+      - name: Serverless AWS authentication
+        run: serverless config credentials --provider aws --key ${{ secrets.AWS_ACCESS_KEY_ID }} --secret ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: Create secrets.yml
+        run: |
+          cat > secrets.yml << EOF
+          ${{ secrets.TCLOUD_MIDDLER_API_SECRETS }}
+          EOF
+
+      - name: Deploy step function
+        if: ${{ github.event.inputs.deployStepFunction }}
+        run: |
+          if [ ${{ github.event.inputs.deployStepFunction }} != "none" ]; then
+            cd src/stepfunction/${{ inputs.deployStepFunction }}
+            export SLS_AWS_REQUEST_MAX_RETRIES=10
+            serverless deploy --stage dev
+          fi
+
+      - name: Deploy services
+        if: ${{ github.event.inputs.deployServices }}
+        run: |
+          if [ ${{ github.event.inputs.deployServices }} == "true" ]; then
+            export SLS_AWS_REQUEST_MAX_RETRIES=10
+            serverless deploy --stage dev
+          fi
