@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       commands:
-        description: 'Command - Ex: cd src/stepfunction && sls deploy -f ateleia_add_user'
+        description: 'Command - Ex: cd src/stepfunction && sls deploy -f ateleia_add_user && sls deploy -f ateleia_add_user --update-config'
         default: 'none'
         required: false
         type: string
