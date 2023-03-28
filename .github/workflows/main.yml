@@ -3,9 +3,35 @@ name: source deployment dev
 on:
   workflow_dispatch:
     inputs:
+      deploySqsTriggers:
+        type: choice
+        description: Deploy SQS Triggers
+        options:
+          - none
+          - backups
+          - betteruptime_incident
+          - cherwell
+          - cherwell_additional_vm
+          - cherwell_topology_delete_cmdb
+          - cherwell_topology_delete_rdm
+          - cognito_signin
+          - cognito_signout
+          - customer_migration
+          - maintenance_window
+          - pipeline
+          - product_info
+          - product_ports
+          - send_email
+          - tcloud_watch_events
+          - tcm_connect
+          - tcm_disconnect
+          - tcm_ping
+          - tcw_sla
+          - workflow_error
+
       deployStepFunction:
         type: choice
-        description: Deploy step function
+        description: Deploy Step Functions
         options:
           - none
           - action_product_service
@@ -82,6 +108,15 @@ jobs:
           cat > secrets.yml << EOF
           ${{ secrets.TCLOUD_MIDDLER_API_SECRETS }}
           EOF
+
+      - name: Deploy SQS Triggers
+        if: ${{ github.event.inputs.deploySqsTriggers }}
+        run: |
+          if [ ${{ github.event.inputs.deploySqsTriggers }} != "none" ]; then
+            cd src/stepfunction/${{ inputs.deploySqsTriggers }}
+            export SLS_AWS_REQUEST_MAX_RETRIES=10
+            serverless deploy --stage dev
+          fi
 
       - name: Deploy step function
         if: ${{ github.event.inputs.deployStepFunction }}
