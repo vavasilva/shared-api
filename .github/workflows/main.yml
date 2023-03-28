@@ -4,9 +4,8 @@ on:
   workflow_dispatch:
     inputs:
       commands:
-        description: 'Command 
-        
-        Ex: cd src/stepfunction && sls deploy -f ateleia_add_user'
+        description: 'Command - Ex: cd src/stepfunction && sls deploy -f ateleia_add_user'
+        default: none
         required: false
         type: string
 
@@ -233,7 +232,7 @@ jobs:
       - name: Commands
         if: ${{ github.event.inputs.commands }}
         run: |
-          if [ ${{ github.event.inputs.commands }} == "true" ]; then
+          if [ ${{ github.event.inputs.deployStepFunction }} != "none" ]; then
             export SLS_AWS_REQUEST_MAX_RETRIES=10
             ${{ inputs.commands }}
           fi
