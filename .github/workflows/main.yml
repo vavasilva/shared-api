@@ -3,6 +3,11 @@ name: source deployment dev
 on:
   workflow_dispatch:
     inputs:
+      commands:
+        description: 'Ex: cd src/stepfunction && sls deploy -f ateleia_add_user'
+        required: false
+        type: string
+
       deployCloudWatchSchedule:
         type: choice
         description: Deploy Cloudwatch Schedule
@@ -192,7 +197,7 @@ jobs:
         if: ${{ github.event.inputs.deployS3Triggers }}
         run: |
           if [ ${{ github.event.inputs.deployS3Triggers }} != "none" ]; then
-            cd src/sqs_triggers/${{ inputs.deployS3Triggers }}
+            cd src/s3_triggers/${{ inputs.deployS3Triggers }}
             export SLS_AWS_REQUEST_MAX_RETRIES=10
             serverless deploy --stage dev
           fi
@@ -221,4 +226,12 @@ jobs:
           if [ ${{ github.event.inputs.deployServices }} == "true" ]; then
             export SLS_AWS_REQUEST_MAX_RETRIES=10
             serverless deploy --stage dev
+          fi
+
+      - name: Commands
+        if: ${{ github.event.inputs.commands }}
+        run: |
+          if [ ${{ github.event.inputs.commands }} == "true" ]; then
+            export SLS_AWS_REQUEST_MAX_RETRIES=10
+            ${{ inputs.commands }}
           fi
