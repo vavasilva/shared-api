@@ -3,6 +3,58 @@ name: source deployment dev
 on:
   workflow_dispatch:
     inputs:
+      deployCloudWatchSchedule:
+        type: choice
+        description: Deploy Cloudwatch Schedule
+        options:
+          - none
+          - ateleia_chatbot_users_product
+          - ateleia_topology_resources_intera
+          - backups
+          - billing_calculation
+          - billing_price_update
+          - commercial_events
+          - datalake_jobs
+          - defaulting_customer
+          - import_nps
+          - import_user_communication
+          - insights_reports
+          - mail_generate_sqs
+          - maintenance_window
+          - pipeline_runnning
+          - tcm_report
+          - update_datalake_customers_ignore
+
+      deployDynamodbTriggers:
+        type: choice
+        description: Deploy Dynamodb Triggers
+        options:
+          - none
+          - ateleia_customer_token_schedule
+          - ateleia_notify_pipeline
+          - ateleia_slack_notification
+          - ateleia_user_roles
+          - report_pipeline_count
+
+      deployLambdaUrls:
+        type: choice
+        description: Deploy Lambda URL
+        options:
+          - none
+          - cherwell
+          - customers_ignore
+          - healthcheck_cyberark
+          - healthcheck_nemesis
+          - incident_betteruptime
+
+      deployS3Triggers:
+        type: choice
+        description: Deploy S3 Triggers
+        options:
+          - none
+          - customer_migration
+          - filemanager
+
       deploySqsTriggers:
         type: choice
         description: Deploy SQS Triggers
@@ -107,18 +159,54 @@ jobs:
         run: |
           cat > secrets.yml << EOF
           ${{ secrets.TCLOUD_MIDDLER_API_SECRETS }}
-          EOF
+          EOFsq
+
+      - name: Deploy CloudWatch Schedule
+        if: ${{ github.event.inputs.deployCloudWatchSchedule }}
+        run: |
+          if [ ${{ github.event.inputs.deployCloudWatchSchedule }} != "none" ]; then
+            cd src/cloudwatch_schedule/${{ inputs.deployCloudWatchSchedule }}
+            export SLS_AWS_REQUEST_MAX_RETRIES=10
+            serverless deploy --stage dev
+          fi
+
+      - name: Deploy Dynamodb Triggers
+        if: ${{ github.event.inputs.deployDynamodbTriggers }}
+        run: |
+          if [ ${{ github.event.inputs.deployDynamodbTriggers }} != "none" ]; then
+            cd src/dynamodb_triggers/${{ inputs.deployDynamodbTriggers }}
+            export SLS_AWS_REQUEST_MAX_RETRIES=10
+            serverless deploy --stage dev
+          fi
+
+      - name: Deploy Lambda Urls
+        if: ${{ github.event.inputs.deployLambdaUrls }}
+        run: |
+          if [ ${{ github.event.inputs.deployLambdaUrls }} != "none" ]; then
+            cd src/lambda_urls/${{ inputs.deployLambdaUrls }}
+            export SLS_AWS_REQUEST_MAX_RETRIES=10
+            serverless deploy --stage dev
+          fi
+
+      - name: Deploy S3 Triggers
+        if: ${{ github.event.inputs.deployS3Triggers }}
+        run: |
+          if [ ${{ github.event.inputs.deployS3Triggers }} != "none" ]; then
+            cd src/sqs_triggers/${{ inputs.deployS3Triggers }}
+            export SLS_AWS_REQUEST_MAX_RETRIES=10
+            serverless deploy --stage dev
+          fi
 
       - name: Deploy SQS Triggers
         if: ${{ github.event.inputs.deploySqsTriggers }}
         run: |
           if [ ${{ github.event.inputs.deploySqsTriggers }} != "none" ]; then
-            cd src/stepfunction/${{ inputs.deploySqsTriggers }}
+            cd src/sqs_triggers/${{ inputs.deploySqsTriggers }}
             export SLS_AWS_REQUEST_MAX_RETRIES=10
             serverless deploy --stage dev
           fi
 
-      - name: Deploy step function
+      - name: Deploy Step Function
         if: ${{ github.event.inputs.deployStepFunction }}
         run: |
           if [ ${{ github.event.inputs.deployStepFunction }} != "none" ]; then
