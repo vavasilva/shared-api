@@ -1,0 +1,238 @@
+name: source deployment prod
+
+on:
+  workflow_dispatch:
+    inputs:
+      commands:
+        description: 'Command - Ex: cd src/stepfunction && sls deploy -f ateleia_add_user'
+        default: 'none'
+        required: false
+        type: string
+
+      deployCloudWatchSchedule:
+        type: choice
+        description: Deploy Cloudwatch Schedule
+        options:
+          - none
+          - ateleia_chatbot_users_product
+          - ateleia_topology_resources_intera
+          - backups
+          - billing_calculation
+          - billing_price_update
+          - commercial_events
+          - datalake_jobs
+          - defaulting_customer
+          - import_nps
+          - import_user_communication
+          - insights_reports
+          - mail_generate_sqs
+          - maintenance_window
+          - pipeline_runnning
+          - tcm_report
+          - update_datalake_customers_ignore
+
+      deployDynamodbTriggers:
+        type: choice
+        description: Deploy Dynamodb Triggers
+        options:
+          - none
+          - ateleia_customer_token_schedule
+          - ateleia_notify_pipeline
+          - ateleia_slack_notification
+          - ateleia_user_roles
+          - report_pipeline_count
+
+      deployLambdaUrls:
+        type: choice
+        description: Deploy Lambda URL
+        options:
+          - none
+          - cherwell
+          - customers_ignore
+          - healthcheck_cyberark
+          - healthcheck_nemesis
+          - incident_betteruptime
+
+      deployS3Triggers:
+        type: choice
+        description: Deploy S3 Triggers
+        options:
+          - none
+          - customer_migration
+          - filemanager
+
+      deploySqsTriggers:
+        type: choice
+        description: Deploy SQS Triggers
+        options:
+          - none
+          - backups
+          - betteruptime_incident
+          - cherwell
+          - cherwell_additional_vm
+          - cherwell_topology_delete_cmdb
+          - cherwell_topology_delete_rdm
+          - cognito_signin
+          - cognito_signout
+          - customer_migration
+          - maintenance_window
+          - pipeline
+          - product_info
+          - product_ports
+          - send_email
+          - tcloud_watch_events
+          - tcm_connect
+          - tcm_disconnect
+          - tcm_ping
+          - tcw_sla
+          - workflow_error
+
+      deployStepFunction:
+        type: choice
+        description: Deploy Step Functions
+        options:
+          - none
+          - action_product_service
+          - action_smartrm_migration
+          - ateleia_backup_exclusion
+          - ateleia_change_ftp_credentials
+          - ateleia_contract_cancellation
+          - ateleia_instance_ports
+          - ateleia_restore_customer_access
+          - carol_provisioning
+          - delete_topology_prime
+          - execute_maintenance_window
+          - intera_clone_topology
+          - intera_update_instance_flavor
+          - intera_update_instance_hard_disk
+          - intera_zone_actions_database_directories
+          - intera_zone_additional_vm
+          - intera_zone_application_migration
+          - intera_zone_backup_manual
+          - intera_zone_clone_database
+          - intera_zone_clone_topology
+          - intera_zone_customer_migration_edge
+          - intera_zone_data_protection
+          - intera_zone_data_protection_download
+          - intera_zone_database_download
+          - intera_zone_database_jobs
+          - intera_zone_database_kill_sessions
+          - intera_zone_database_migration
+          - intera_zone_database_migration_pool
+          - intera_zone_database_tde
+          - intera_zone_database_upgrade
+          - intera_zone_database_user
+          - intera_zone_delete_topology
+          - intera_zone_delete_topology_shared_public_address
+          - intera_zone_delete_topology_smart
+          - intera_zone_edit_loadbalancer
+          - intera_zone_nat
+          - intera_zone_provisioning
+          - intera_zone_provisioning_shared_public_address
+          - intera_zone_provisioning_smart
+          - intera_zone_update_instance_flavor
+          - intera_zone_update_instance_hard_disk
+          - intera_zone_vpn
+          - tcm_execute_command
+
+      deployServices:
+        type: boolean
+        description: 'Deploy all services'
+        required: false
+
+jobs:
+  deploy-dev:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '16.x'
+
+      - name: Branch name
+        run: echo "Current branch $GITHUB_REF"
+
+      - name: Install Serverless Framework
+        run: |
+          make install-serverless-api
+      - name: Install NPM dependencies serverless
+        run: |
+          make install-plugins-api
+      - name: Serverless AWS authentication
+        run: serverless config credentials --provider aws --key ${{ secrets.AWS_ACCESS_KEY_ID }} --secret ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: Create secrets.yml
+        run: |
+          cat > secrets.yml << EOF
+          ${{ secrets.TCLOUD_MIDDLER_API_SECRETS }}
+          EOFsq
+
+      - name: Deploy CloudWatch Schedule
+        if: ${{ github.event.inputs.deployCloudWatchSchedule }}
+        run: |
+          if [ ${{ github.event.inputs.deployCloudWatchSchedule }} != "none" ]; then
+            cd src/cloudwatch_schedule/${{ inputs.deployCloudWatchSchedule }}
+            export SLS_AWS_REQUEST_MAX_RETRIES=10
+            serverless deploy --stage prod
+          fi
+
+      - name: Deploy Dynamodb Triggers
+        if: ${{ github.event.inputs.deployDynamodbTriggers }}
+        run: |
+          if [ ${{ github.event.inputs.deployDynamodbTriggers }} != "none" ]; then
+            cd src/dynamodb_triggers/${{ inputs.deployDynamodbTriggers }}
+            export SLS_AWS_REQUEST_MAX_RETRIES=10
+            serverless deploy --stage prod
+          fi
+
+      - name: Deploy Lambda Urls
+        if: ${{ github.event.inputs.deployLambdaUrls }}
+        run: |
+          if [ ${{ github.event.inputs.deployLambdaUrls }} != "none" ]; then
+            cd src/lambda_urls/${{ inputs.deployLambdaUrls }}
+            export SLS_AWS_REQUEST_MAX_RETRIES=10
+            serverless deploy --stage prod
+          fi
+
+      - name: Deploy S3 Triggers
+        if: ${{ github.event.inputs.deployS3Triggers }}
+        run: |
+          if [ ${{ github.event.inputs.deployS3Triggers }} != "none" ]; then
+            cd src/s3_triggers/${{ inputs.deployS3Triggers }}
+            export SLS_AWS_REQUEST_MAX_RETRIES=10
+            serverless deploy --stage prod
+          fi
+
+      - name: Deploy SQS Triggers
+        if: ${{ github.event.inputs.deploySqsTriggers }}
+        run: |
+          if [ ${{ github.event.inputs.deploySqsTriggers }} != "none" ]; then
+            cd src/sqs_triggers/${{ inputs.deploySqsTriggers }}
+            export SLS_AWS_REQUEST_MAX_RETRIES=10
+            serverless deploy --stage prod
+          fi
+
+      - name: Deploy Step Function
+        if: ${{ github.event.inputs.deployStepFunction }}
+        run: |
+          if [ ${{ github.event.inputs.deployStepFunction }} != "none" ]; then
+            cd src/stepfunction/${{ inputs.deployStepFunction }}
+            export SLS_AWS_REQUEST_MAX_RETRIES=10
+            serverless deploy --stage prod
+          fi
+
+      - name: Deploy services
+        if: ${{ github.event.inputs.deployServices }}
+        run: |
+          if [ ${{ github.event.inputs.deployServices }} == "true" ]; then
+            export SLS_AWS_REQUEST_MAX_RETRIES=10
+            serverless deploy --stage prod
+          fi
+
+      - name: Commands
+        if: ${{ github.event.inputs.commands }}
+        run: |
+          if [ ${{ github.event.inputs.deployStepFunction }} != "none" ]; then
+            export SLS_AWS_REQUEST_MAX_RETRIES=10
+            ${{ inputs.commands }}
+          fi
