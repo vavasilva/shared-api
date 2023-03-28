@@ -5,7 +5,7 @@ on:
     inputs:
       commands:
         description: 'Command - Ex: cd src/stepfunction && sls deploy -f ateleia_add_user'
-        default: none
+        default: 'none'
         required: false
         type: string
 
